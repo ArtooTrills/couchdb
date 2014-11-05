@@ -120,6 +120,7 @@ update(Idx, Mod, IdxState) ->
     CurrSeq = Mod:get(update_seq, IdxState),
     UpdateOpts = Mod:get(update_options, IdxState),
     CommittedOnly = lists:member(committed_only, UpdateOpts),
+    IncludeDeleted = lists:member(include_deleted, UpdateOpts),
     IncludeDesign = lists:member(include_design, UpdateOpts),
     DocOpts = case lists:member(local_seq, UpdateOpts) of
         true -> [conflicts, deleted_conflicts, local_seq];
@@ -134,9 +135,7 @@ update(Idx, Mod, IdxState) ->
             {ok, IdxState0} -> IdxState0;
             reset -> exit({reset, self()})
         end,
-
         NumChanges = couch_db:count_changes_since(Db, CurrSeq),
-
         LoadDoc = fun(DocInfo) ->
             #doc_info{
                 id=DocId,
@@ -145,13 +144,19 @@ update(Idx, Mod, IdxState) ->
             } = DocInfo,
 
             case {IncludeDesign, DocId} of
-                {false, <<"_design/", _/binary>>} ->
-                    {nil, Seq};
-                _ when Deleted ->
-                    {#doc{id=DocId, deleted=true}, Seq};
-                _ ->
-                    {ok, Doc} = couch_db:open_doc_int(Db, DocInfo, DocOpts),
-                    {Doc, Seq}
+                    {false, <<"_design/", _/binary>>} ->
+                        {nil, Seq};
+                    _ when Deleted ->
+                        case IncludeDeleted of
+                            true ->
+                                {ok, Doc} = couch_db:open_doc_int(Db, DocInfo, DocOpts),
+                                {Doc, Seq};
+                            false ->
+                                {nil, Seq}
+                        end;
+                    _ ->
+                        {ok, Doc} = couch_db:open_doc_int(Db, DocInfo, DocOpts),
+                        {Doc, Seq}
             end
         end,
 

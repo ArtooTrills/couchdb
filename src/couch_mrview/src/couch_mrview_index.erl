@@ -36,9 +36,11 @@ get(Property, State) ->
             State#mrst.purge_seq;
         update_options ->
             Opts = State#mrst.design_opts,
+            IncDeleted = couch_util:get_value(<<"include_deleted">>, Opts, false),
             IncDesign = couch_util:get_value(<<"include_design">>, Opts, false),
             LocalSeq = couch_util:get_value(<<"local_seq">>, Opts, false),
             if IncDesign -> [include_design]; true -> [] end
+                ++ if IncDeleted -> [include_deleted]; true -> [] end
                 ++ if LocalSeq -> [local_seq]; true -> [] end;
         info ->
             #mrst{
