@@ -121,7 +121,6 @@ update(Idx, Mod, IdxState) ->
     UpdateOpts = Mod:get(update_options, IdxState),
     CommittedOnly = lists:member(committed_only, UpdateOpts),
     IncludeDeleted = lists:member(include_deleted, UpdateOpts),
-    % ?LOG_INFO("Deleted level reading: ~p", IncludeDeleted),
     IncludeDesign = lists:member(include_design, UpdateOpts),
     DocOpts = case lists:member(local_seq, UpdateOpts) of
         true -> [conflicts, deleted_conflicts, local_seq];
@@ -146,7 +145,6 @@ update(Idx, Mod, IdxState) ->
                 revs=[#rev_info{deleted=Deleted} | _]
             } = DocInfo,
 
-            % ?LOG_INFO("Deleted level: ~p", IncludeDeleted),
             case {IncludeDesign, DocId} of
                 {false, <<"_design/", _/binary>>} ->
                     {nil, Seq};
