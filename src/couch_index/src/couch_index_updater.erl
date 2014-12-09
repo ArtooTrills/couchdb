@@ -144,17 +144,16 @@ update(Idx, Mod, IdxState) ->
                 high_seq=Seq,
                 revs=[#rev_info{deleted=Deleted} | _]
             } = DocInfo,
-
             case {IncludeDesign, DocId} of
                 {false, <<"_design/", _/binary>>} ->
                     {nil, Seq};
                 _ when Deleted ->
                     case IncludeDeleted of
-                        true ->
-                            {ok, Doc} = couch_db:open_doc_int(Db, DocInfo, DocOpts),
-                            {Doc, Seq};
-                        false ->
-                            {nil, Seq}
+                       true ->
+                           {ok, Doc} = couch_db:open_doc_int(Db, DocInfo, DocOpts),
+                           {Doc, Seq};
+                       false ->
+                           {#doc{id=DocId, deleted=true}, Seq}
                     end;
                 _ ->
                     {ok, Doc} = couch_db:open_doc_int(Db, DocInfo, DocOpts),

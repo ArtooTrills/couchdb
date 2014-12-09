@@ -137,12 +137,19 @@ map_docs(Parent, State0) ->
                 _ -> State0
             end,
             QServer = State1#mrst.qserver,
+            Opts = State1#mrst.design_opts,
+            IncludeDeleted = couch_util:get_value(<<"include_deleted">>, Opts, false),
             DocFun = fun
                 ({nil, Seq, _}, {SeqAcc, Results}) ->
                     {erlang:max(Seq, SeqAcc), Results};
                 ({Id, Seq, Doc, deleted}, {SeqAcc, Results}) ->
-                    {ok, Res} = couch_query_servers:map_doc_raw(QServer, Doc),
-                    {erlang:max(Seq, SeqAcc), [{Id, Res} | Results]};
+                    case IncludeDeleted of
+                        true ->
+                            {ok, Res} = couch_query_servers:map_doc_raw(QServer, Doc),
+                            {erlang:max(Seq, SeqAcc), [{Id, Res} | Results]};
+                        false ->
+                            {erlang:max(Seq, SeqAcc), [{Id, []} | Results]}
+                    end;
                 ({Id, Seq, Doc}, {SeqAcc, Results}) ->
                     {ok, Res} = couch_query_servers:map_doc_raw(QServer, Doc),
                     {erlang:max(Seq, SeqAcc), [{Id, Res} | Results]}
