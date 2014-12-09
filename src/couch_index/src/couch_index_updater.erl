@@ -135,9 +135,7 @@ update(Idx, Mod, IdxState) ->
             {ok, IdxState0} -> IdxState0;
             reset -> exit({reset, self()})
         end,
-
         NumChanges = couch_db:count_changes_since(Db, CurrSeq),
-
         LoadDoc = fun(DocInfo) ->
             #doc_info{
                 id=DocId,
